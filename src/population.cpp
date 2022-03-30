@@ -12,13 +12,15 @@ Population::Population( std::string input_file) {
   std::string variable = (Get_line(input_file,3));
   int precision = std::stoi(Get_line(input_file,4));
   std::string eval_function = Get_line(input_file,5);
+  std::string domain_func = Get_line(input_file,6);
+  std::string crossover = Get_line(input_file,7);
 
 
   for (int i = 0; i < population; i++) {
     population_.push_back(Individual(2));
   }
 
-  
+
 }
 
 Population::~Population(){}
