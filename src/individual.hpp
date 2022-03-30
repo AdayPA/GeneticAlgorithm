@@ -6,7 +6,7 @@ class Individual {
 
   public:
 
-    Individual();
+    Individual(int);
     ~Individual();
 
   private:

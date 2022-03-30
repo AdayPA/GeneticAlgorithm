@@ -7,15 +7,15 @@ class Chromosome {
 
   public:
 
+    Chromosome();
     Chromosome(int);
     ~Chromosome();
-    std::vector<bool> gens_;
-
+    
   private:
-
-    void randomValue(int &);
+   
+    std::vector<bool> gens_;
+    void randomValue(int);
 
 };
-
 
 #endif

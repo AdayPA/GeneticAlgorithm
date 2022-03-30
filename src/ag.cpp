@@ -1,11 +1,13 @@
-#include "individual.cpp"
+#include "population.cpp"
 
-#include <iostream>
+#include <ctime>
+
 
 int main(void) {
+  srand(time(NULL));
+   
+  Population a("../input/ebook.txt");
 
-  Chromosome temp(10);
-  //std::cout << temp.gens_.at(0);
 
 
   return 0;
