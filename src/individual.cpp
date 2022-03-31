@@ -5,12 +5,14 @@
 
 #include <cmath>
 
-Individual::Individual(int size, float min_value, float max_value){
+Individual::Individual(int size, float min_value, float max_value, int precision){
   chromosome_ = Chromosome(size);
   chromosome_value_ = 0;
   fenotype_ = 0.0;
+  fitness_ = 0.0;
   min_value_ = min_value;
   max_value_ = max_value;
+  precision_ = precision;
   calcFenotype();
   normalize();
 }
@@ -24,7 +26,11 @@ void Individual::calcFenotype(void) {
 }
 
 void Individual::normalize(void) {
-  fenotype_ = min_value_ + (chromosome_value_ * (3 / ( pow(2,chromosome_.getSize()) - 1)));
+  if (precision_ == 1) {
+    fenotype_ = chromosome_value_;
+  } else {
+    fenotype_ = min_value_ + (chromosome_value_ * (3 / ( pow(2,chromosome_.getSize()) - 1)));
+  }
 }
 
 #endif

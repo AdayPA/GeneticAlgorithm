@@ -35,18 +35,25 @@ Population::~Population(){
 }
 
 void Population::doCycle(void) {
-  int chromosome_size = (int)ceil(log2(domain_ * pow(10,precision_)));
+  int chromosome_size;
+  if (precision_ == 1) {
+    chromosome_size = (int)ceil(log2(domain_ ));
+  } else {
+    chromosome_size = (int)ceil(log2(domain_ * pow(10,precision_)));
+  }
+  std::cout << "tamaño: " << chromosome_size <<"\n";
   // ** INIT ** //
   for (int i = 0; i < population_size_; i++) {
-    population_.push_back(Individual(chromosome_size, min_value_, max_value_));
+    population_.push_back(Individual(chromosome_size, min_value_, max_value_, precision_));
   }
   // ** CALC FITNESS ** //
   translateFunction();
   for (int i = 0; i < population_.size(); i++) {
     x_ = population_[i].getFenotype();
-    std::cout << te_eval(eval_fun_) << "\n";
+    population_[i].setFitness(te_eval(eval_fun_));
+    std::cout << population_[i].getValue()<< " "<< population_[i].getFenotype() <<" "<<te_eval(eval_fun_) << population_[i].getFitness() << "\n";
   }
-
+  
 }
 
 void Population::translateFunction(void) {
