@@ -8,6 +8,7 @@ class Individual {
 
     Individual(int);
     ~Individual();
+    int getValue(void);
 
   private:
 

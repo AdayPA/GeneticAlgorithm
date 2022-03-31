@@ -1,0 +1,2 @@
+https://en.wikipedia.org/wiki/Selection_(genetic_algorithm)
+https://medium.datadriveninvestor.com/genetic-algorithms-selection-5634cfc45d78

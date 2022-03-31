@@ -10,10 +10,13 @@ class Chromosome {
     Chromosome();
     Chromosome(int);
     ~Chromosome();
+    int getSize(void);
+    bool getValue(int);
     
   private:
    
     std::vector<bool> gens_;
+    int size_;
     void randomValue(int);
 
 };
