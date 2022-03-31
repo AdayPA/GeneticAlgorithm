@@ -7,6 +7,8 @@
 #include <string>
 #include <cmath>
 
+
+
 Population::Population( std::string input_file) {
   population_size_ = std::stoi(Get_line(input_file,1));
   output_size_ = std::stoi(Get_line(input_file,2));
@@ -18,34 +20,49 @@ Population::Population( std::string input_file) {
   selection_ = Get_line(input_file,8);
   std::vector<std::string> min_max = Split(domain_func_, " ");
   domain_ = std::stof(min_max[1]) - std::stof(min_max[0]);
-  min_value = std::stof(min_max[0]);
-  max_value = std::stof(min_max[1]);
-  float chromosome_size = ceil(log2(domain_  * pow(10,precision_)));
-  for (int i = 0; i < population_size_; i++) {
-    population_.push_back(Individual(chromosome_size));
-  }
+  min_value_ = std::stof(min_max[0]);
+  max_value_ = std::stof(min_max[1]);
+
+
   
-  //doCycle();
-  //translateFunction();
+  doCycle();
+
+
 }
 
-Population::~Population(){}
+Population::~Population(){
+  te_free(eval_fun_);
+}
 
 void Population::doCycle(void) {
-  calcValue();
+  int chromosome_size = (int)ceil(log2(domain_ * pow(10,precision_)));
+  // ** INIT ** //
+  for (int i = 0; i < population_size_; i++) {
+    population_.push_back(Individual(chromosome_size, min_value_, max_value_));
+  }
+  // ** CALC FITNESS ** //
+  translateFunction();
+  for (int i = 0; i < population_.size(); i++) {
+    x_ = population_[i].getFenotype();
+    std::cout << te_eval(eval_fun_) << "\n";
+  }
+
 }
 
-void Population::calcValue(void) {
-  for (int i = 0; i < population_size_; i++) {
-    population_values.push_back(population_[i].getValue());
+void Population::translateFunction(void) {
+  int *err;
+  const char *expression = eval_function_.c_str();
+  if (variable_.size() == 1) {
+    te_variable vars[] = {"x", &x_};
+    eval_fun_ = te_compile(expression, vars, 1, err);
+  } else if (variable_.size() == 3) {
+    te_variable vars[] = {{"x", &x_}, {"y", &y_}};
+    eval_fun_ = te_compile(expression, vars, 2, err);
+  } else if (variable_.size() == 5) {
+    te_variable vars[] = {{"x", &x_}, {"y", &y_}, {"z", &z_}};
+    eval_fun_ = te_compile(expression, vars, 3, err);
   }
 }
-
-float Population::normalizeValue(int binary) {
-  return 0.0;
-}
-
-void Population::translateFunction(void) {}
 
 std::string Population::Get_line(const std::string& filename, const int& line_number) {
   std::ifstream inputfile(filename);

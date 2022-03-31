@@ -1,0 +1,8 @@
+4
+1
+x
+1
+x^2
+0 31
+two-point
+roulette

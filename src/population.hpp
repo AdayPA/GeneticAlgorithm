@@ -2,7 +2,7 @@
 #define POPULATION_HPP_
 
 #include "individual.cpp"
-
+#include "tinyexpr.h"
 class Population {
 
   public:
@@ -14,15 +14,15 @@ class Population {
   
   std::string Get_line (const std::string&, const int&);
   std::vector<std::string> Split (std::string, std::string);
-  float normalizeValue(int);
   void doCycle(void);
-  void calcValue(void);
   void translateFunction(void);
   std::vector<Individual> population_;
-  std::vector<int> population_values;
-  float min_value;
-  float max_value;
+  float min_value_;
+  float max_value_;
   float domain_;
+  double x_;
+  double y_;
+  double z_;
   int population_size_;
   int output_size_;
   int precision_;
@@ -31,6 +31,8 @@ class Population {
   std::string domain_func_;
   std::string crossover_;
   std::string selection_;
+
+  te_expr *eval_fun_;
   
 };
 

@@ -6,13 +6,20 @@ class Individual {
 
   public:
 
-    Individual(int);
+    Individual();
+    Individual(int, float, float);
     ~Individual();
-    int getValue(void);
+    inline int getValue(void) { return chromosome_value_; };
+    inline float getFenotype(void) { return fenotype_; };
 
   private:
-
+    void calcFenotype(void);
+    void normalize(void);
     Chromosome chromosome_;
+    float fenotype_;
+    int chromosome_value_;
+    float min_value_;
+    float max_value_;
 
 };
 
