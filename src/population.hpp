@@ -17,6 +17,8 @@ class Population {
   void doCycle(void);
   void translateFunction(void);
   void selection(void);
+  void crossover(void);
+  void doRoulette(void);
   std::vector<Individual> population_;
   std::vector<Individual> selected_parents_;
   float min_value_;
