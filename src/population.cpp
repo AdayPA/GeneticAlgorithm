@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 #include <cmath>
+#include <algorithm>
 
 
 
@@ -24,7 +25,6 @@ Population::Population( std::string input_file) {
   max_value_ = std::stof(min_max[1]);
 
 
-  
   doCycle();
 
 
@@ -41,19 +41,48 @@ void Population::doCycle(void) {
   } else {
     chromosome_size = (int)ceil(log2(domain_ * pow(10,precision_)));
   }
-  std::cout << "tamaño: " << chromosome_size <<"\n";
   // ** INIT ** //
   for (int i = 0; i < population_size_; i++) {
     population_.push_back(Individual(chromosome_size, min_value_, max_value_, precision_));
   }
   // ** CALC FITNESS ** //
   translateFunction();
+  total_fitness_ = 0.0;
   for (int i = 0; i < population_.size(); i++) {
     x_ = population_[i].getFenotype();
     population_[i].setFitness(te_eval(eval_fun_));
-    std::cout << population_[i].getValue()<< " "<< population_[i].getFenotype() <<" "<<te_eval(eval_fun_) << population_[i].getFitness() << "\n";
+    total_fitness_ += te_eval(eval_fun_);
   }
+  // ** SELECTION **//
+  selection();
   
+}
+
+void Population::selection(void) {
+  if (selection_ == "roulette") {
+    std::vector<std::vector<float>> chance;
+    std::vector<float> temp;
+    for (int i = 0; i < population_.size(); i++) {
+      temp.push_back(population_[i].getFitness() / total_fitness_);
+      temp.push_back(i);
+      chance.push_back(temp);
+      temp.clear();
+    }
+    std::sort(chance.begin(), chance.end());
+    std::reverse(chance.begin(), chance.end());
+    for (int i = 1; i < chance.size(); i++) {
+      chance[i][0] = chance[i][0] + chance[i-1][0] ;
+    }
+    for (int i = 0 ; i < population_.size() / 2 ; i++) {
+      float random = (double) rand() / (RAND_MAX);
+      for (int j = 0; j < chance.size(); j++) {
+        if (random < chance[j][0]) {
+          selected_parents_.push_back(population_[chance[j][1]]);
+          j = chance.size();
+        }
+      }
+    }
+  }
 }
 
 void Population::translateFunction(void) {

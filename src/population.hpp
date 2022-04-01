@@ -16,10 +16,13 @@ class Population {
   std::vector<std::string> Split (std::string, std::string);
   void doCycle(void);
   void translateFunction(void);
+  void selection(void);
   std::vector<Individual> population_;
+  std::vector<Individual> selected_parents_;
   float min_value_;
   float max_value_;
   float domain_;
+  float total_fitness_;
   double x_;
   double y_;
   double z_;
