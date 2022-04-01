@@ -7,6 +7,7 @@ class Individual {
   public:
 
     Individual();
+    Individual(Individual, Individual, std::string);
     Individual(int, float, float, int);
     ~Individual();
     inline int getValue(void) { return chromosome_value_; };

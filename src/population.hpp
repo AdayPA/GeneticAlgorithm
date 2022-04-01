@@ -19,6 +19,8 @@ class Population {
   void selection(void);
   void crossover(void);
   void doRoulette(void);
+  void doTwoPoint(void);
+  void doOnePoint(void);
   std::vector<Individual> population_;
   std::vector<Individual> selected_parents_;
   float min_value_;

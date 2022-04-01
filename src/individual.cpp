@@ -5,7 +5,13 @@
 
 #include <cmath>
 
-Individual::Individual(int size, float min_value, float max_value, int precision){
+Individual::Individual(Individual p1, Individual p2, std::string crossover) {
+  if (crossover == "onepoint") {
+    
+  }
+}
+
+Individual::Individual(int size, float min_value, float max_value, int precision) {
   chromosome_ = Chromosome(size);
   chromosome_value_ = 0;
   fenotype_ = 0.0;

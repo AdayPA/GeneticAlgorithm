@@ -59,7 +59,9 @@ void Population::doCycle(void) {
 }
 
 void Population::crossover(void) {
-  
+    if (selection_ == "two-point") {
+      doTwoPoint();
+  }
 
 }
 
@@ -68,6 +70,18 @@ void Population::selection(void) {
     doRoulette();
   }
 }
+
+void Population::doTwoPoint(void) {
+
+}
+
+void Population::doOnePoint(void) {
+  for (int i = 0; i < selected_parents_.size() / 2; i+2) {
+      population_.push_back(Individual(selected_parents_[i],selected_parents_[i+1],"onepoint"));
+  } 
+
+}
+
 
 void Population::doRoulette(void) {
   std::vector<std::vector<float>> chance;
