@@ -1,7 +1,7 @@
 #ifndef POPULATION_HPP_
 #define POPULATION_HPP_
 
-#include "individual.cpp"
+#include "../src/individual.cpp"
 #include "tinyexpr.h"
 class Population {
 
@@ -33,6 +33,7 @@ class Population {
   int population_size_;
   int output_size_;
   int precision_;
+  int crossover_section_;
   std::string variable_;
   std::string eval_function_;
   std::string domain_func_;

@@ -1,7 +1,7 @@
 #ifndef POPULATION_CPP_
 #define POPULATION_CPP_
 
-#include "population.hpp"
+#include "../lib/population.hpp"
 
 #include <fstream>
 #include <string>
@@ -19,6 +19,7 @@ Population::Population( std::string input_file) {
   domain_func_ = Get_line(input_file,6);
   crossover_ = Get_line(input_file,7);
   selection_ = Get_line(input_file,8);
+  crossover_section_ = std::stoi(Get_line(input_file,9));
   std::vector<std::string> min_max = Split(domain_func_, " ");
   domain_ = std::stof(min_max[1]) - std::stof(min_max[0]);
   min_value_ = std::stof(min_max[0]);
@@ -54,15 +55,32 @@ void Population::doCycle(void) {
     total_fitness_ += te_eval(eval_fun_);
   }
   // ** SELECTION **//
+  std::cout << "antes de seleccion \n";
+    for (int  i = 0; i < population_.size(); i++) {
+    for (int j = 0; j < population_[0].getSize(); j++) {
+      std::cout << population_[i].getGen(j);
+    }
+    std::cout << "\n";
+  }
   selection();
   crossover();
+
+  for (int  i = 0; i < population_.size(); i++) {
+    for (int j = 0; j < population_[0].getSize(); j++) {
+      std::cout << population_[i].getGen(j);
+    }
+    std::cout << "\n";
+  }
+
 }
 
 void Population::crossover(void) {
-    if (selection_ == "two-point") {
-      doTwoPoint();
+  if (crossover_ == "two-point") {
+    doTwoPoint();
   }
-
+  if (crossover_ == "one-point") {
+    doOnePoint();
+  }
 }
 
 void Population::selection(void) {
@@ -76,10 +94,15 @@ void Population::doTwoPoint(void) {
 }
 
 void Population::doOnePoint(void) {
-  for (int i = 0; i < selected_parents_.size() / 2; i+2) {
-      population_.push_back(Individual(selected_parents_[i],selected_parents_[i+1],"onepoint"));
+  std::vector<Individual> offspring;
+  std::cout << "tamaño popu: " << population_.size();
+  for (int i = 0; i < selected_parents_.size() / 2; i+3) {
+    offspring = selected_parents_[i].doOnePoint(selected_parents_[i+1], crossover_section_);
+    population_.push_back(offspring[0]);
+    population_.push_back(offspring[1]);
+    offspring.clear();
   } 
-
+  std::cout << " tamaño popu: " << population_.size();
 }
 
 

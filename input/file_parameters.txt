@@ -1,0 +1,9 @@
+Population size
+Numbers of variables
+Variable
+Precision
+Fitness function
+Range [min max]
+Crossover type
+Selection type
+Crossover lenght

@@ -1,7 +1,7 @@
 #ifndef CHROMOSOME_CPP_
 #define CHROMOSOME_CPP_
 
-#include "chromosome.hpp"
+#include "../lib/chromosome.hpp"
 
 #include <iostream>
 
@@ -21,6 +21,11 @@ void Chromosome::randomValue(int size) {
     gens_.push_back(rand() > (RAND_MAX / 2));
   }
 }
+
+void Chromosome::setChromosome(std::vector<bool> gens) {
+  gens_ = gens;
+}
+
 
 int Chromosome::getSize(void) {
   return size_;
