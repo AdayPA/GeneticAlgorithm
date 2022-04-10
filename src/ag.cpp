@@ -9,7 +9,7 @@ int main(void) {
   Individual b(10,0,10,1);
   a.printIndividual();
   b.printIndividual();
-  std::vector<Individual> child = a.doOnePoint(b,3);
+  std::vector<Individual> child = a.doTwoPoint(b,3,7);
   child[0].printIndividual();
   child[1].printIndividual();
   //Population a("../input/hojadecalculo.txt");

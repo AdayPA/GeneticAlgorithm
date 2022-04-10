@@ -17,7 +17,8 @@ class Individual {
     inline void setFitness(float fitness) { fitness_ = fitness; };
     bool getGen(int);
     void printIndividual(void);
-    std::vector<Individual> doOnePoint(const Individual, int);
+    std::vector<Individual> doSinglePoint(const Individual, int);
+    std::vector<Individual> doTwoPoint(const Individual, int, int);
 
   private:
   

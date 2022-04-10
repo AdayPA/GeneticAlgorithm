@@ -24,16 +24,45 @@ Individual::Individual(Chromosome chromosome) {
 
 Individual::~Individual() {}
 
-std::vector<Individual> Individual::doOnePoint(Individual p1, int section) {
+std::vector<Individual> Individual::doSinglePoint(Individual p1, int section) {
   std::vector<bool> offspring1;
   std::vector<bool> offspring2;
+  #pragma unroll
   for (int i = 0; i < section; i++) {
     offspring1.push_back(p1.getGen(i));
     offspring2.push_back(this->getGen(i));
   }
+  #pragma unroll
   for (int i = section; i < p1.size_; i++) {
     offspring1.push_back(this->getGen(i));
     offspring2.push_back( p1.getGen(i));
+  }
+  std::vector<Individual> result;
+  Chromosome child1(size_);
+  child1.setChromosome(offspring1);
+  Individual c1(child1);
+  result.push_back(c1);
+  Chromosome child2(size_);
+  child2.setChromosome(offspring2);
+  Individual c2(child2);
+  result.push_back(c2);
+  return result;
+}
+
+std::vector<Individual> Individual::doTwoPoint( Individual p1, int first, int second) {
+  std::vector<bool> offspring1;
+  std::vector<bool> offspring2;
+  for (int i = 0; i < first; i++) {
+    offspring1.push_back(this->getGen(i));
+    offspring2.push_back(p1.getGen(i));
+  }
+  for (int i = first; i < second; i++) {
+    offspring1.push_back(p1.getGen(i));
+    offspring2.push_back(this->getGen(i));
+  }
+  for (int i = second; i < size_; i++) {
+    offspring1.push_back(this->getGen(i));
+    offspring2.push_back(p1.getGen(i));
   }
   std::vector<Individual> result;
   Chromosome child1(size_);
