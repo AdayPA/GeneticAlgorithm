@@ -100,7 +100,6 @@ void Individual::printIndividual(void) {
   for (int i = 0; i < chromosome_.getSize(); i++) {
     std::cout << chromosome_.getValue(i);
   }
-  printf("\n");
 }
 
 

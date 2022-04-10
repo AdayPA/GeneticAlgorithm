@@ -7,7 +7,7 @@
 #include <string>
 #include <cmath>
 #include <algorithm>
-
+#include <iomanip>
 
 
 Population::Population( std::string input_file) {
@@ -34,15 +34,14 @@ Population::~Population(){
 }
 
 void Population::doCycle(void) {
-  int chromosome_size;
   if (precision_ == 1) {
-    chromosome_size = (int)ceil(log2(domain_ ));
+    chromosome_size_ = (int)ceil(log2(domain_ ));
   } else {
-    chromosome_size = (int)ceil(log2(domain_ * pow(10,precision_)));
+    chromosome_size_ = (int)ceil(log2(domain_ * pow(10,precision_)));
   }
   // ** INIT ** //
   for (int i = 0; i < population_size_; i++) {
-    population_.push_back(Individual(chromosome_size, min_value_, max_value_, precision_));
+    population_.push_back(Individual(chromosome_size_, min_value_, max_value_, precision_));
   }
   // ** CALC FITNESS ** //
   translateFunction();
@@ -54,14 +53,11 @@ void Population::doCycle(void) {
   }
   // ** SELECTION **//
   std::cout << "antes de seleccion \n";
-    for (int  i = 0; i < population_.size(); i++) {
-    for (int j = 0; j < population_[0].getSize(); j++) {
-      std::cout << population_[i].getGen(j);
-    }
-    std::cout << "\n";
-  }
-  /*
+  printPopulation(3);
+  
   selection();
+  printSelectedParent();
+  /*
   crossover();
 
   for (int  i = 0; i < population_.size(); i++) {
@@ -71,6 +67,34 @@ void Population::doCycle(void) {
     std::cout << "\n";
   }
 */
+}
+
+void Population::printSelectedParent(void) {
+  std::cout << "Selected parents:\n"; 
+  std::cout << "Chromosome" << std::setw(20) << "Fenotype"  << std::setw(18) << "Fitness" << "\n";
+  for (int  i = 0; i < selected_parents_.size(); i++) {
+    selected_parents_[i].printIndividual();
+    std::cout << std::setw(20) << selected_parents_[i].getFenotype() << std::setw(20) << selected_parents_[i].getFitness() << "\n";
+  }
+}
+
+void Population::printPopulation(int info) {
+  std::cout << "Population:\n"; 
+  std::cout << "Chromosome" << std::setw(20) << "Fenotype"  << std::setw(18) << "Fitness" << "\n";
+  for (int  i = 0; i < population_.size(); i++) {
+    if (info == 1) {
+      population_[i].printIndividual();
+    }
+    if (info == 2) {
+      population_[i].printIndividual();
+      std::cout << population_[i].getFenotype();
+    }
+    if (info == 3) {
+      population_[i].printIndividual();
+      std::cout << std::setw(20) << population_[i].getFenotype() << std::setw(20) << population_[i].getFitness();
+    }
+    printf("\n");
+  }
 }
 
 void Population::crossover(void) {
@@ -121,6 +145,7 @@ void Population::doRoulette(void) {
     for (int j = 0; j < chance.size(); j++) {
       if (random < chance[j][0]) {
         selected_parents_.push_back(population_[chance[j][1]]);
+        chance.erase(chance.begin() + j);
         j = chance.size();
       }
     }

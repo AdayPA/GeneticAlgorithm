@@ -14,6 +14,8 @@ class Population {
   
   std::string Get_line (const std::string&, const int&);
   std::vector<std::string> Split (std::string, std::string);
+  void printPopulation(int);
+  void printSelectedParent();
   void doCycle(void);
   void translateFunction(void);
   void selection(void);
@@ -34,6 +36,7 @@ class Population {
   int output_size_;
   int precision_;
   int crossover_section_;
+  int chromosome_size_;
   std::string variable_;
   std::string eval_function_;
   std::string domain_func_;
