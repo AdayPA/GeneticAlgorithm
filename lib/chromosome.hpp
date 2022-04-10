@@ -10,7 +10,7 @@ class Chromosome {
     Chromosome();
     Chromosome(int);
     ~Chromosome();
-    int getSize(void);
+    inline const int getSize(void) { return size_; };
     bool getValue(int);
     void setChromosome(std::vector<bool>);
     
