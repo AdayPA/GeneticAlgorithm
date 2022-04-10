@@ -26,7 +26,6 @@ void Chromosome::setChromosome(std::vector<bool> gens) {
   gens_ = gens;
 }
 
-
 bool Chromosome::getValue(int pos) {
   return gens_.at(pos);
 }

@@ -16,7 +16,7 @@ class Individual {
     inline float getFitness(void) { return fitness_; };
     inline void setFitness(float fitness) { fitness_ = fitness; };
     bool getGen(int);
-    friend std::ostream &operator<<( std::ostream &, const Individual & );
+    void printIndividual(void);
     std::vector<Individual> doOnePoint(const Individual, int);
 
   private:
