@@ -20,6 +20,8 @@ Individual::Individual(int size, float min_value, float max_value, int precision
 
 Individual::Individual(Chromosome chromosome) {
   chromosome_ = chromosome;
+  calcFenotype();
+  normalize();
 }
 
 Individual::~Individual() {}

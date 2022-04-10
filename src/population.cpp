@@ -25,9 +25,7 @@ Population::Population( std::string input_file) {
   min_value_ = std::stof(min_max[0]);
   max_value_ = std::stof(min_max[1]);
 
-
   doCycle();
-
 
 }
 
@@ -62,6 +60,7 @@ void Population::doCycle(void) {
     }
     std::cout << "\n";
   }
+  /*
   selection();
   crossover();
 
@@ -71,7 +70,7 @@ void Population::doCycle(void) {
     }
     std::cout << "\n";
   }
-
+*/
 }
 
 void Population::crossover(void) {
@@ -97,10 +96,7 @@ void Population::doOnePoint(void) {
   std::vector<Individual> offspring;
   std::cout << "tamaño popu: " << population_.size();
   for (int i = 0; i < selected_parents_.size() / 2; i+3) {
-    offspring = selected_parents_[i].doOnePoint(selected_parents_[i+1], crossover_section_);
-    population_.push_back(offspring[0]);
-    population_.push_back(offspring[1]);
-    offspring.clear();
+
   } 
   std::cout << " tamaño popu: " << population_.size();
 }
