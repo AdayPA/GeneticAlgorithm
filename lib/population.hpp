@@ -15,7 +15,8 @@ class Population {
   std::string Get_line (const std::string&, const int&);
   std::vector<std::string> Split (std::string, std::string);
   void printPopulation(int);
-  void printSelectedParent();
+  void printSelectedParent(void);
+  void getNextGeneration(void);
   void doCycle(void);
   void translateFunction(void);
   void calcFitness(void);

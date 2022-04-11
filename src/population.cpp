@@ -24,16 +24,6 @@ Population::Population( std::string input_file) {
   domain_ = std::stof(min_max[1]) - std::stof(min_max[0]);
   min_value_ = std::stof(min_max[0]);
   max_value_ = std::stof(min_max[1]);
-
-  doCycle();
-
-}
-
-Population::~Population(){
-  te_free(eval_fun_);
-}
-
-void Population::doCycle(void) {
   if (precision_ == 1) {
     chromosome_size_ = (int)ceil(log2(domain_ ));
   } else {
@@ -43,18 +33,57 @@ void Population::doCycle(void) {
   for (int i = 0; i < population_size_; i++) {
     population_.push_back(Individual(chromosome_size_, min_value_, max_value_, precision_));
   }
-  // ** CALC FITNESS ** //
   translateFunction();
-  calcFitness();
+
+  for (int i = 0; i < 4; i++) {
+  doCycle();
+  }
   printPopulation(3);
+
+}
+
+Population::~Population(){
+  te_free(eval_fun_);
+}
+
+void Population::getNextGeneration(void) {
+  std::vector<std::vector<float>> chance;
+  std::vector<float> temp;
+  std::vector<Individual> new_population;
+  for (int i = 0; i < population_.size(); i++) {
+    temp.push_back(population_[i].getFitness() / total_fitness_);
+    temp.push_back(i);
+    chance.push_back(temp);
+    temp.clear();
+  }
+  std::sort(chance.begin(), chance.end());
+  std::reverse(chance.begin(), chance.end());
+  for (int i = 1; i < chance.size(); i++) {
+    chance[i][0] = chance[i][0] + chance[i-1][0] ;
+  }
+  for (int i = 0 ; i < (population_.size() - selected_parents_.size()) ; i++) {
+    float random = (double) rand() / (RAND_MAX);
+    for (int j = 0; j < chance.size(); j++) {
+      if (random < chance[j][0]) {
+        new_population.push_back(population_[chance[j][1]]);
+        chance.erase(chance.begin() + j);
+        j = chance.size();
+      }
+    }
+  }
+  population_ = new_population;
+}
+
+void Population::doCycle(void) {
+  // ** CALC FITNESS ** //
+  calcFitness();
   // ** SELECTION **//
   selection();
-  printSelectedParent();
   // ** CROSSOVER **//
   crossover();
   calcFitness();
-  printPopulation(3);
-
+  // ** NEW GENERATION **//
+  getNextGeneration();
 }
 
 void Population::calcFitness(void) {
@@ -104,6 +133,7 @@ void Population::crossover(void) {
 }
 
 void Population::selection(void) {
+  selected_parents_.clear();
   if (selection_ == "roulette") {
     doRoulette();
   }
