@@ -1,6 +1,8 @@
 #ifndef CHROMOSOME_HPP_
 #define CHROMOSOME_HPP_
 
+#include <cstddef>
+#include <random>
 #include <vector>
 
 class Chromosome {
@@ -8,17 +10,17 @@ class Chromosome {
   public:
 
     Chromosome();
-    Chromosome(int);
+    explicit Chromosome(std::size_t, std::mt19937&);
+    explicit Chromosome(std::vector<bool>);
     ~Chromosome();
-    inline const int getSize(void) { return size_; };
-    bool getValue(int);
-    void setChromosome(std::vector<bool>);
+    std::size_t getSize(void) const;
+    bool getValue(std::size_t) const;
+    const std::vector<bool>& getGenes(void) const;
     
   private:
    
     std::vector<bool> gens_;
-    int size_;
-    void randomValue(int);
+    void randomValue(std::size_t, std::mt19937&);
 
 };
 

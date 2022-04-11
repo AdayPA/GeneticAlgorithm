@@ -1,49 +1,66 @@
 #ifndef POPULATION_HPP_
 #define POPULATION_HPP_
 
-#include "../src/individual.cpp"
+#include "individual.hpp"
 #include "tinyexpr.h"
+
+#include <iosfwd>
+#include <random>
+#include <string>
+#include <vector>
+
 class Population {
 
   public:
 
-    Population(std::string);
+    explicit Population(const std::string&, unsigned int);
     ~Population();
+    void run(std::size_t, std::ostream&);
 
   private:
-  
-  std::string Get_line (const std::string&, const int&);
-  std::vector<std::string> Split (std::string, std::string);
-  void printPopulation(int);
-  void printSelectedParent(void);
+  enum class CrossoverType {
+    SinglePoint,
+    TwoPoint
+  };
+
+  enum class SelectionType {
+    Roulette
+  };
+
+  struct Config {
+    std::size_t population_size;
+    std::size_t variable_count;
+    std::string variable;
+    int precision;
+    std::string fitness_function;
+    double min_value;
+    double max_value;
+    CrossoverType crossover_type;
+    SelectionType selection_type;
+    std::vector<std::size_t> crossover_points;
+  };
+
+  Config loadConfig(const std::string&) const;
+  void validateConfig(void) const;
+  std::vector<std::string> split(const std::string&) const;
+  void printPopulation(std::ostream&, const std::string&) const;
   void getNextGeneration(void);
   void doCycle(void);
   void translateFunction(void);
   void calcFitness(void);
   void selection(void);
   void crossover(void);
-  void doRoulette(void);
+  std::vector<Individual> doRoulette(const std::vector<Individual>&, std::size_t);
   void doTwoPoint(void);
   void doSinglePoint(void);
+  double rouletteWeightFloor(const std::vector<Individual>&) const;
+
+  Config config_;
   std::vector<Individual> population_;
   std::vector<Individual> selected_parents_;
-  float min_value_;
-  float max_value_;
-  float domain_;
-  float total_fitness_;
+  std::mt19937 rng_;
   double x_;
-  double y_;
-  double z_;
-  int population_size_;
-  int output_size_;
-  int precision_;
-  int chromosome_size_;
-  std::string variable_;
-  std::string eval_function_;
-  std::string domain_func_;
-  std::string crossover_;
-  std::string selection_;
-  std::string crossover_section_;
+  std::size_t chromosome_size_;
 
   te_expr *eval_fun_;
   

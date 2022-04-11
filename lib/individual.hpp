@@ -1,40 +1,44 @@
 #ifndef INDIVIDUAL_HPP_
 #define INDIVIDUAL_HPP_
 
-#include "../src/chromosome.cpp"
+#include "chromosome.hpp"
+
+#include <iosfwd>
+#include <random>
+#include <vector>
+
 class Individual {
 
   public:
 
     Individual();
-    Individual(Chromosome, int, float, float, int);
-    Individual(int, float, float, int);
+    Individual(Chromosome, double, double, int);
+    Individual(std::size_t, double, double, int, std::mt19937&);
     ~Individual();
-    inline int getValue(void) { return chromosome_value_; };
-    inline int getSize(void) { return size_; };
-    inline int getPrecision(void) { return precision_; };
-    inline float getMinValue(void) { return min_value_; };
-    inline float getMaxValue(void) { return max_value_; };
-    inline float getFenotype(void) { return fenotype_; };
-    inline float getFitness(void) { return fitness_; };
-    inline void setFitness(float fitness) { fitness_ = fitness; };
-    bool getGen(int);
-    void printIndividual(void);
-    std::vector<Individual> doSinglePoint(const Individual, int);
-    std::vector<Individual> doTwoPoint(const Individual, int, int);
+    unsigned long long getValue(void) const;
+    std::size_t getSize(void) const;
+    int getPrecision(void) const;
+    double getMinValue(void) const;
+    double getMaxValue(void) const;
+    double getFenotype(void) const;
+    double getFitness(void) const;
+    void setFitness(double);
+    bool getGen(std::size_t) const;
+    void printIndividual(std::ostream&) const;
+    std::vector<Individual> doSinglePoint(const Individual&, std::size_t) const;
+    std::vector<Individual> doTwoPoint(const Individual&, std::size_t, std::size_t) const;
 
   private:
   
     void calcFenotype(void);
     void normalize(void);
     Chromosome chromosome_;
-    float fenotype_;
-    float fitness_;
-    float min_value_;
-    float max_value_;
-    int chromosome_value_;
+    double fenotype_;
+    double fitness_;
+    double min_value_;
+    double max_value_;
+    unsigned long long chromosome_value_;
     int precision_;
-    int size_;
 };
 
 #endif

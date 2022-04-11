@@ -1,4 +1,4 @@
-src/ag.exe
-src/*.o
-src/*.exe
-src/*.bat
+build/
+*.o
+*.exe
+*.bat

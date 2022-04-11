@@ -1,237 +1,281 @@
-#ifndef POPULATION_CPP_
-#define POPULATION_CPP_
-
 #include "../lib/population.hpp"
 
-#include <fstream>
-#include <string>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <fstream>
 #include <iomanip>
+#include <iostream>
+#include <limits>
+#include <numeric>
+#include <sstream>
+#include <stdexcept>
+#include <string>
 
-
-Population::Population( std::string input_file) {
-  population_size_ = std::stoi(Get_line(input_file,1));
-  output_size_ = std::stoi(Get_line(input_file,2));
-  variable_ = (Get_line(input_file,3));
-  precision_ = std::stoi(Get_line(input_file,4));
-  eval_function_ = Get_line(input_file,5);
-  domain_func_ = Get_line(input_file,6);
-  crossover_ = Get_line(input_file,7);
-  selection_ = Get_line(input_file,8);
-  crossover_section_ = Get_line(input_file,9);
-  std::vector<std::string> min_max = Split(domain_func_, " ");
-  domain_ = std::stof(min_max[1]) - std::stof(min_max[0]);
-  min_value_ = std::stof(min_max[0]);
-  max_value_ = std::stof(min_max[1]);
-  if (precision_ == 1) {
-    chromosome_size_ = (int)ceil(log2(domain_ ));
-  } else {
-    chromosome_size_ = (int)ceil(log2(domain_ * pow(10,precision_)));
+namespace {
+std::string trim(const std::string& value) {
+  const std::string whitespace = " \t\r\n";
+  const std::size_t start = value.find_first_not_of(whitespace);
+  if (start == std::string::npos) {
+    return "";
   }
-  // ** INIT ** //
-  for (int i = 0; i < population_size_; i++) {
-    population_.push_back(Individual(chromosome_size_, min_value_, max_value_, precision_));
-  }
-  translateFunction();
-
-  for (int i = 0; i < 4; i++) {
-    printPopulation(3);
-  doCycle();
-  }
-  printPopulation(3);
-
+  const std::size_t end = value.find_last_not_of(whitespace);
+  return value.substr(start, end - start + 1);
 }
 
-Population::~Population(){
+std::size_t parseSize(const std::string& value, const std::string& field) {
+  const std::string cleaned = trim(value);
+  if (cleaned.empty() || cleaned[0] == '-') {
+    throw std::invalid_argument("Invalid numeric value for " + field + ": " + value);
+  }
+
+  std::size_t consumed = 0;
+  const unsigned long result = std::stoul(cleaned, &consumed);
+  if (consumed != cleaned.size()) {
+    throw std::invalid_argument("Invalid numeric value for " + field + ": " + value);
+  }
+  return static_cast<std::size_t>(result);
+}
+
+double parseDouble(const std::string& value, const std::string& field) {
+  const std::string cleaned = trim(value);
+  std::size_t consumed = 0;
+  const double result = std::stod(cleaned, &consumed);
+  if (consumed != cleaned.size()) {
+    throw std::invalid_argument("Invalid decimal value for " + field + ": " + value);
+  }
+  return result;
+}
+}
+
+Population::Population(const std::string& input_file, unsigned int seed)
+    : config_(loadConfig(input_file)),
+      rng_(seed),
+      x_(0.0),
+      chromosome_size_(0),
+      eval_fun_(nullptr) {
+  validateConfig();
+  const double domain = config_.max_value - config_.min_value;
+  const double scaled_domain = domain * std::pow(10.0, static_cast<double>(config_.precision));
+  chromosome_size_ = std::max<std::size_t>(2, static_cast<std::size_t>(std::ceil(std::log2(scaled_domain + 1.0))));
+
+  population_.reserve(config_.population_size);
+  for (std::size_t i = 0; i < config_.population_size; i++) {
+    population_.emplace_back(chromosome_size_, config_.min_value, config_.max_value, config_.precision, rng_);
+  }
+  translateFunction();
+}
+
+Population::~Population() {
   te_free(eval_fun_);
 }
 
-void Population::getNextGeneration(void) {
-  std::vector<std::vector<float>> chance;
-  std::vector<float> temp;
-  std::vector<Individual> new_population;
-  for (int i = 0; i < population_.size(); i++) {
-    temp.push_back(population_[i].getFitness() / total_fitness_);
-    temp.push_back(i);
-    chance.push_back(temp);
-    temp.clear();
+void Population::run(std::size_t generations, std::ostream& os) {
+  calcFitness();
+  printPopulation(os, "Initial population");
+
+  for (std::size_t i = 0; i < generations; i++) {
+    doCycle();
+    printPopulation(os, "Generation " + std::to_string(i + 1));
   }
-  std::sort(chance.begin(), chance.end());
-  std::reverse(chance.begin(), chance.end());
-  for (int i = 1; i < chance.size(); i++) {
-    chance[i][0] = chance[i][0] + chance[i-1][0] ;
+}
+
+Population::Config Population::loadConfig(const std::string& filename) const {
+  std::ifstream inputfile(filename);
+  if (!inputfile) {
+    throw std::runtime_error("Unable to open input file: " + filename);
   }
-  for (int i = 0 ; i < (population_.size() - selected_parents_.size()) ; i++) {
-    float random = (double) rand() / (RAND_MAX);
-    for (int j = 0; j < chance.size(); j++) {
-      if (random < chance[j][0]) {
-        new_population.push_back(population_[chance[j][1]]);
-        chance.erase(chance.begin() + j);
-        j = chance.size();
-      }
+
+  std::vector<std::string> lines;
+  std::string line;
+  while (std::getline(inputfile, line)) {
+    if (!trim(line).empty()) {
+      lines.push_back(trim(line));
     }
   }
-  population_ = new_population;
+  if (lines.size() < 9) {
+    throw std::runtime_error("Input file must contain 9 non-empty lines");
+  }
+
+  Config config{};
+  config.population_size = parseSize(lines[0], "population size");
+  config.variable_count = parseSize(lines[1], "variable count");
+  config.variable = lines[2];
+  config.precision = static_cast<int>(parseSize(lines[3], "precision"));
+  config.fitness_function = lines[4];
+
+  const std::vector<std::string> min_max = split(lines[5]);
+  if (min_max.size() != 2) {
+    throw std::runtime_error("Range must contain two values: min max");
+  }
+  config.min_value = parseDouble(min_max[0], "minimum range");
+  config.max_value = parseDouble(min_max[1], "maximum range");
+
+  if (lines[6] == "single-point") {
+    config.crossover_type = CrossoverType::SinglePoint;
+  } else if (lines[6] == "two-point") {
+    config.crossover_type = CrossoverType::TwoPoint;
+  } else {
+    throw std::runtime_error("Unsupported crossover type: " + lines[6]);
+  }
+
+  if (lines[7] == "roulette") {
+    config.selection_type = SelectionType::Roulette;
+  } else {
+    throw std::runtime_error("Unsupported selection type: " + lines[7]);
+  }
+
+  const std::vector<std::string> points = split(lines[8]);
+  for (const std::string& point : points) {
+    config.crossover_points.push_back(parseSize(point, "crossover point"));
+  }
+  return config;
+}
+
+void Population::validateConfig(void) const {
+  if (config_.population_size < 2) {
+    throw std::runtime_error("Population size must be at least 2");
+  }
+  if (config_.variable_count != 1 || config_.variable != "x") {
+    throw std::runtime_error("This implementation supports exactly one variable named x");
+  }
+  if (config_.max_value <= config_.min_value) {
+    throw std::runtime_error("Range maximum must be greater than range minimum");
+  }
+  if (config_.precision < 0) {
+    throw std::runtime_error("Precision must be zero or greater");
+  }
 }
 
 void Population::doCycle(void) {
-  // ** CALC FITNESS ** //
-  calcFitness();
-  // ** SELECTION **//
   selection();
-  // ** CROSSOVER **//
   crossover();
   calcFitness();
-  // ** NEW GENERATION **//
   getNextGeneration();
+  calcFitness();
 }
 
 void Population::calcFitness(void) {
-  total_fitness_ = 0.0;
-  for (int i = 0; i < population_.size(); i++) {
+  for (std::size_t i = 0; i < population_.size(); i++) {
     x_ = population_[i].getFenotype();
-    population_[i].setFitness(te_eval(eval_fun_));
-    total_fitness_ += te_eval(eval_fun_);
+    const double fitness = te_eval(eval_fun_);
+    if (!std::isfinite(fitness)) {
+      throw std::runtime_error("Fitness function returned a non-finite value for x=" + std::to_string(x_));
+    }
+    population_[i].setFitness(fitness);
   }
 }
 
-void Population::printSelectedParent(void) {
-  std::cout << "Selected parents:\n"; 
-  std::cout << "Chromosome" << std::setw(20) << "Fenotype"  << std::setw(18) << "Fitness" << "\n";
-  for (int  i = 0; i < selected_parents_.size(); i++) {
-    selected_parents_[i].printIndividual();
-    std::cout << std::setw(20) << selected_parents_[i].getFenotype() << std::setw(20) << selected_parents_[i].getFitness() << "\n";
-  }
-}
+void Population::printPopulation(std::ostream& os, const std::string& title) const {
+  os << "\n" << title << ":\n";
+  os << std::left << std::setw(static_cast<int>(chromosome_size_ + 4)) << "Chromosome"
+     << std::right << std::setw(14) << "Phenotype"
+     << std::setw(14) << "Fitness" << "\n";
 
-void Population::printPopulation(int info) {
-  std::cout << "Population:\n"; 
-  std::cout << "Chromosome" << std::setw(20) << "Fenotype"  << std::setw(18) << "Fitness" << "\n";
-  for (int  i = 0; i < population_.size(); i++) {
-    if (info == 1) {
-      population_[i].printIndividual();
-    }
-    if (info == 2) {
-      population_[i].printIndividual();
-      std::cout << population_[i].getFenotype();
-    }
-    if (info == 3) {
-      population_[i].printIndividual();
-      std::cout << std::setw(20) << population_[i].getFenotype() << std::setw(20) << population_[i].getFitness();
-    }
-    printf("\n");
+  for (const Individual& individual : population_) {
+    individual.printIndividual(os);
+    os << std::right << std::setw(18) << std::fixed << std::setprecision(config_.precision) << individual.getFenotype()
+       << std::setw(14) << std::setprecision(6) << individual.getFitness() << "\n";
   }
 }
 
 void Population::crossover(void) {
-  if (crossover_ == "two-point") {
+  if (config_.crossover_type == CrossoverType::TwoPoint) {
     doTwoPoint();
   }
-  if (crossover_ == "single-point") {
+  else if (config_.crossover_type == CrossoverType::SinglePoint) {
     doSinglePoint();
   }
 }
 
 void Population::selection(void) {
   selected_parents_.clear();
-  if (selection_ == "roulette") {
-    doRoulette();
+  if (config_.selection_type == SelectionType::Roulette) {
+    const std::size_t parent_count = std::max<std::size_t>(2, (config_.population_size / 2) * 2);
+    selected_parents_ = doRoulette(population_, std::min(parent_count, population_.size()));
   }
 }
 
 void Population::doTwoPoint(void) {
-  std::vector<std::string> section = Split(crossover_section_, " ");
-  std::vector<std::vector<Individual>> new_population;
-  for (int i = 0; i < selected_parents_.size() / 2; i++) {
-    new_population.push_back(selected_parents_[i].doTwoPoint(selected_parents_[i+1], std::stoi(section[0]), std::stoi(section[1])));
-    i++;
+  if (config_.crossover_points.size() != 2) {
+    throw std::runtime_error("Two-point crossover requires two crossover points");
   }
-  for (int i = 0; i < new_population.size(); i++) {
-    population_.push_back(new_population[i][0]);
-    population_.push_back(new_population[i][1]);
+  const std::size_t first = config_.crossover_points[0];
+  const std::size_t second = config_.crossover_points[1];
+  if (first == 0 || second <= first || second >= chromosome_size_) {
+    throw std::runtime_error("Two-point crossover requires 0 < first < second < chromosome size");
+  }
+
+  for (std::size_t i = 0; i + 1 < selected_parents_.size(); i += 2) {
+    const std::vector<Individual> children = selected_parents_[i].doTwoPoint(selected_parents_[i + 1], first, second);
+    population_.insert(population_.end(), children.begin(), children.end());
   }
 }
 
 void Population::doSinglePoint(void) {
-  std::vector<std::vector<Individual>> new_population;
-  for (int i = 0; i < selected_parents_.size() / 2; i++) {
-    new_population.push_back(selected_parents_[i].doSinglePoint(selected_parents_[i+1], std::stoi(crossover_section_)));
-    i++;
+  if (config_.crossover_points.size() != 1) {
+    throw std::runtime_error("Single-point crossover requires one crossover point");
   }
-  for (int i = 0; i < new_population.size(); i++) {
-    population_.push_back(new_population[i][0]);
-    population_.push_back(new_population[i][1]);
+  const std::size_t section = config_.crossover_points[0];
+  if (section == 0 || section >= chromosome_size_) {
+    throw std::runtime_error("Single-point crossover requires 0 < point < chromosome size");
+  }
+
+  for (std::size_t i = 0; i + 1 < selected_parents_.size(); i += 2) {
+    const std::vector<Individual> children = selected_parents_[i].doSinglePoint(selected_parents_[i + 1], section);
+    population_.insert(population_.end(), children.begin(), children.end());
   }
 }
 
-void Population::doRoulette(void) {
-  std::vector<std::vector<float>> chance;
-  std::vector<float> temp;
-  for (int i = 0; i < population_.size(); i++) {
-    temp.push_back(population_[i].getFitness() / total_fitness_);
-    temp.push_back(i);
-    chance.push_back(temp);
-    temp.clear();
-  }
-  std::sort(chance.begin(), chance.end());
-  std::reverse(chance.begin(), chance.end());
-  for (int i = 1; i < chance.size(); i++) {
-    chance[i][0] = chance[i][0] + chance[i-1][0] ;
-  }
-  for (int i = 0 ; i < population_.size() / 2 ; i++) {
-    float random = (double) rand() / (RAND_MAX);
-    for (int j = 0; j < chance.size(); j++) {
-      if (random < chance[j][0]) {
-        selected_parents_.push_back(population_[chance[j][1]]);
-        chance.erase(chance.begin() + j);
-        j = chance.size();
-      }
+void Population::getNextGeneration(void) {
+  population_ = doRoulette(population_, config_.population_size);
+}
+
+std::vector<Individual> Population::doRoulette(const std::vector<Individual>& source, std::size_t count) {
+  std::vector<std::size_t> candidates(source.size());
+  std::iota(candidates.begin(), candidates.end(), 0);
+
+  std::vector<Individual> selected;
+  selected.reserve(count);
+  while (!candidates.empty() && selected.size() < count) {
+    std::vector<double> weights;
+    weights.reserve(candidates.size());
+    const double floor = rouletteWeightFloor(source);
+    for (const std::size_t candidate : candidates) {
+      weights.push_back((source[candidate].getFitness() - floor) + 1.0);
     }
+
+    std::discrete_distribution<std::size_t> distribution(weights.begin(), weights.end());
+    const std::size_t selected_position = distribution(rng_);
+    selected.push_back(source[candidates[selected_position]]);
+    candidates.erase(candidates.begin() + static_cast<std::ptrdiff_t>(selected_position));
   }
+  return selected;
+}
+
+double Population::rouletteWeightFloor(const std::vector<Individual>& source) const {
+  double min_fitness = std::numeric_limits<double>::infinity();
+  for (const Individual& individual : source) {
+    min_fitness = std::min(min_fitness, individual.getFitness());
+  }
+  return std::isfinite(min_fitness) ? min_fitness : 0.0;
 }
 
 void Population::translateFunction(void) {
-  int *err;
-  const char *expression = eval_function_.c_str();
-  if (variable_.size() == 1) {
-    te_variable vars[] = {"x", &x_};
-    eval_fun_ = te_compile(expression, vars, 1, err);
-  } else if (variable_.size() == 3) {
-    te_variable vars[] = {{"x", &x_}, {"y", &y_}};
-    eval_fun_ = te_compile(expression, vars, 2, err);
-  } else if (variable_.size() == 5) {
-    te_variable vars[] = {{"x", &x_}, {"y", &y_}, {"z", &z_}};
-    eval_fun_ = te_compile(expression, vars, 3, err);
+  int error = 0;
+  const char *expression = config_.fitness_function.c_str();
+  te_variable vars[] = {{"x", &x_, TE_VARIABLE, nullptr}};
+  eval_fun_ = te_compile(expression, vars, 1, &error);
+  if (eval_fun_ == nullptr) {
+    throw std::runtime_error("Unable to compile fitness function near character " + std::to_string(error));
   }
 }
 
-std::string Population::Get_line(const std::string& filename, const int& line_number) {
-  std::ifstream inputfile(filename);
-  auto temp(1);
-  std::string line;
-  while( (!(inputfile.eof())) && (temp < line_number)) {
-    std::getline(inputfile, line);
-    ++temp;
-  }
-  std::getline(inputfile, line);
-  return line;
-}
-
-std::vector<std::string> Population::Split (std::string str, std::string delim) {
-  /// @brief this func split in 2 the string and store them in vector, 
-  //         depending of the char
+std::vector<std::string> Population::split(const std::string& str) const {
   std::vector<std::string> tokens;
-  size_t prev = 0, pos = 0;
-  do {
-    pos = str.find(delim, prev);
-    if (pos == std::string::npos) pos = str.length();
-    std::string token = str.substr(prev, pos-prev);
-    if (!token.empty()) tokens.push_back(token);
-    prev = pos + delim.length();
+  std::istringstream stream(str);
+  std::string token;
+  while (stream >> token) {
+    tokens.push_back(token);
   }
-  while (pos < str.length() && prev < str.length());
   return tokens;
 }
-
-#endif

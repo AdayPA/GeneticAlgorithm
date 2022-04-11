@@ -6,4 +6,4 @@ Fitness function
 Range [min max]
 Crossover type
 Selection type
-Crossover lenght
+Crossover point(s)

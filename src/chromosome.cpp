@@ -1,33 +1,34 @@
-#ifndef CHROMOSOME_CPP_
-#define CHROMOSOME_CPP_
-
 #include "../lib/chromosome.hpp"
 
-#include <iostream>
-
+#include <utility>
 
 Chromosome::Chromosome(){}
 
-Chromosome::Chromosome(int size) {
-  randomValue(size);
-  size_ = size;
+Chromosome::Chromosome(std::size_t size, std::mt19937& rng) {
+  randomValue(size, rng);
 }
 
-Chromosome::~Chromosome() {
-}
+Chromosome::Chromosome(std::vector<bool> gens)
+    : gens_(std::move(gens)) {}
 
-void Chromosome::randomValue(int size) {
-  for (int i = 0; i < size; i++) {
-    gens_.push_back(rand() > (RAND_MAX / 2));
+Chromosome::~Chromosome() {}
+
+void Chromosome::randomValue(std::size_t size, std::mt19937& rng) {
+  std::bernoulli_distribution coin(0.5);
+  gens_.reserve(size);
+  for (std::size_t i = 0; i < size; i++) {
+    gens_.push_back(coin(rng));
   }
 }
 
-void Chromosome::setChromosome(std::vector<bool> gens) {
-  gens_ = gens;
+std::size_t Chromosome::getSize(void) const {
+  return gens_.size();
 }
 
-bool Chromosome::getValue(int pos) {
+bool Chromosome::getValue(std::size_t pos) const {
   return gens_.at(pos);
 }
 
-#endif
+const std::vector<bool>& Chromosome::getGenes(void) const {
+  return gens_;
+}
