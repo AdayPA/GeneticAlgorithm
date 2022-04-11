@@ -18,8 +18,15 @@ Individual::Individual(int size, float min_value, float max_value, int precision
   normalize();
 }
 
-Individual::Individual(Chromosome chromosome) {
+Individual::Individual(Chromosome chromosome, int size, float min_value, float max_value, int precision) {
   chromosome_ = chromosome;
+  chromosome_value_ = 0;
+  fenotype_ = 0.0;
+  fitness_ = 0.0;
+  min_value_ = min_value;
+  max_value_ = max_value;
+  precision_ = precision;
+  size_ = size;
   calcFenotype();
   normalize();
 }
@@ -42,11 +49,11 @@ std::vector<Individual> Individual::doSinglePoint(Individual p1, int section) {
   std::vector<Individual> result;
   Chromosome child1(size_);
   child1.setChromosome(offspring1);
-  Individual c1(child1);
+  Individual c1(child1, p1.getSize(), p1.getMinValue(), p1.getMaxValue(), p1.getPrecision());
   result.push_back(c1);
   Chromosome child2(size_);
   child2.setChromosome(offspring2);
-  Individual c2(child2);
+  Individual c2(child2, p1.getSize(), p1.getMinValue(), p1.getMaxValue(), p1.getPrecision());
   result.push_back(c2);
   return result;
 }
@@ -69,11 +76,11 @@ std::vector<Individual> Individual::doTwoPoint( Individual p1, int first, int se
   std::vector<Individual> result;
   Chromosome child1(size_);
   child1.setChromosome(offspring1);
-  Individual c1(child1);
+  Individual c1(child1, p1.getSize(), p1.getMinValue(), p1.getMaxValue(), p1.getPrecision());
   result.push_back(c1);
   Chromosome child2(size_);
   child2.setChromosome(offspring2);
-  Individual c2(child2);
+  Individual c2(child2, p1.getSize(), p1.getMinValue(), p1.getMaxValue(), p1.getPrecision());
   result.push_back(c2);
   return result;
 }

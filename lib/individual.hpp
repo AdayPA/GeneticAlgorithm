@@ -7,11 +7,14 @@ class Individual {
   public:
 
     Individual();
-    Individual(Chromosome);
+    Individual(Chromosome, int, float, float, int);
     Individual(int, float, float, int);
     ~Individual();
     inline int getValue(void) { return chromosome_value_; };
     inline int getSize(void) { return size_; };
+    inline int getPrecision(void) { return precision_; };
+    inline float getMinValue(void) { return min_value_; };
+    inline float getMaxValue(void) { return max_value_; };
     inline float getFenotype(void) { return fenotype_; };
     inline float getFitness(void) { return fitness_; };
     inline void setFitness(float fitness) { fitness_ = fitness; };

@@ -19,7 +19,7 @@ Population::Population( std::string input_file) {
   domain_func_ = Get_line(input_file,6);
   crossover_ = Get_line(input_file,7);
   selection_ = Get_line(input_file,8);
-  crossover_section_ = std::stoi(Get_line(input_file,9));
+  crossover_section_ = Get_line(input_file,9);
   std::vector<std::string> min_max = Split(domain_func_, " ");
   domain_ = std::stof(min_max[1]) - std::stof(min_max[0]);
   min_value_ = std::stof(min_max[0]);
@@ -45,28 +45,25 @@ void Population::doCycle(void) {
   }
   // ** CALC FITNESS ** //
   translateFunction();
+  calcFitness();
+  printPopulation(3);
+  // ** SELECTION **//
+  selection();
+  printSelectedParent();
+  // ** CROSSOVER **//
+  crossover();
+  calcFitness();
+  printPopulation(3);
+
+}
+
+void Population::calcFitness(void) {
   total_fitness_ = 0.0;
   for (int i = 0; i < population_.size(); i++) {
     x_ = population_[i].getFenotype();
     population_[i].setFitness(te_eval(eval_fun_));
     total_fitness_ += te_eval(eval_fun_);
   }
-  // ** SELECTION **//
-  std::cout << "antes de seleccion \n";
-  printPopulation(3);
-  
-  selection();
-  printSelectedParent();
-  /*
-  crossover();
-
-  for (int  i = 0; i < population_.size(); i++) {
-    for (int j = 0; j < population_[0].getSize(); j++) {
-      std::cout << population_[i].getGen(j);
-    }
-    std::cout << "\n";
-  }
-*/
 }
 
 void Population::printSelectedParent(void) {
@@ -101,8 +98,8 @@ void Population::crossover(void) {
   if (crossover_ == "two-point") {
     doTwoPoint();
   }
-  if (crossover_ == "one-point") {
-    doOnePoint();
+  if (crossover_ == "single-point") {
+    doSinglePoint();
   }
 }
 
@@ -113,18 +110,29 @@ void Population::selection(void) {
 }
 
 void Population::doTwoPoint(void) {
-
+  std::vector<std::string> section = Split(crossover_section_, " ");
+  std::vector<std::vector<Individual>> new_population;
+  for (int i = 0; i < selected_parents_.size() / 2; i++) {
+    new_population.push_back(selected_parents_[i].doTwoPoint(selected_parents_[i+1], std::stoi(section[0]), std::stoi(section[1])));
+    i++;
+  }
+  for (int i = 0; i < new_population.size(); i++) {
+    population_.push_back(new_population[i][0]);
+    population_.push_back(new_population[i][1]);
+  }
 }
 
-void Population::doOnePoint(void) {
-  std::vector<Individual> offspring;
-  std::cout << "tamaño popu: " << population_.size();
-  for (int i = 0; i < selected_parents_.size() / 2; i+3) {
-
-  } 
-  std::cout << " tamaño popu: " << population_.size();
+void Population::doSinglePoint(void) {
+  std::vector<std::vector<Individual>> new_population;
+  for (int i = 0; i < selected_parents_.size() / 2; i++) {
+    new_population.push_back(selected_parents_[i].doSinglePoint(selected_parents_[i+1], std::stoi(crossover_section_)));
+    i++;
+  }
+  for (int i = 0; i < new_population.size(); i++) {
+    population_.push_back(new_population[i][0]);
+    population_.push_back(new_population[i][1]);
+  }
 }
-
 
 void Population::doRoulette(void) {
   std::vector<std::vector<float>> chance;

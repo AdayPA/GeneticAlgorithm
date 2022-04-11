@@ -4,6 +4,6 @@ x
 1
 x^2
 0 31
-one-point
+single-point
 roulette
 3
