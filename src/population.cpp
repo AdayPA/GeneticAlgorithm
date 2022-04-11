@@ -36,6 +36,7 @@ Population::Population( std::string input_file) {
   translateFunction();
 
   for (int i = 0; i < 4; i++) {
+    printPopulation(3);
   doCycle();
   }
   printPopulation(3);
